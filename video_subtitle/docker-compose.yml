@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: video_database
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=True
+      - DB_NAME=video_database
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+      - DB_HOST=db
+      - DB_PORT=5432
+
+  celery:
+    build: .
+    command: celery -A video_subtitle worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - web
+    environment:
+      - DB_NAME=yvideo_database
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+      - DB_HOST=db
+      - DB_PORT=5432
+
+volumes:
+  postgres_data:
